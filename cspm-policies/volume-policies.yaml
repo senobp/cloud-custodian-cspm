@@ -1,0 +1,78 @@
+policies:
+
+  # 1. 암호화되지 않은 볼륨 탐지
+  #    encrypted == false인 볼륨 → 데이터 탈취 시 바로 읽힘
+  #    CIS Benchmark 명시적 요구 항목
+  - name: volume-unencrypted
+    resource: openstack.volume
+    description: |
+      암호화(encrypted=false)가 설정되지 않은 볼륨을 탐지한다.
+      암호화되지 않은 볼륨은 물리적 접근이나 스냅샷 탈취 시
+      데이터가 그대로 노출되는 심각한 보안 위협이 된다.
+    filters:
+      - type: value
+        key: encrypted
+        op: eq
+        value: false
+
+  # 2. 장기 방치 볼륨 탐지
+  #    생성된 지 90일 이상 지난 볼륨 점검
+  #    value_type: age 는 created_at 날짜를 현재까지의 일수로 변환
+  - name: volume-age-over-90d
+    resource: openstack.volume
+    description: |
+      생성된 지 90일이 넘은 볼륨을 탐지한다.
+      장기간 방치된 볼륨은 담당자 부재, 미사용 자원 낭비,
+      보안 패치 누락 등의 위험이 있다.
+    filters:
+      - type: value
+        key: created_at
+        value_type: age
+        op: gt
+        value: 90
+
+  # 3. VM에 연결되지 않은 볼륨 탐지
+  #    attachments 필드가 빈 리스트 → 미사용 볼륨
+  - name: volume-unattached
+    resource: openstack.volume
+    description: |
+      어떤 VM에도 연결(attach)되지 않은 볼륨을 탐지한다.
+      연결되지 않은 볼륨은 사용되지 않으면서 비용이 발생하고
+      방치 시 보안 관리 사각지대가 될 수 있다.
+    filters:
+      - type: value
+        key: attachments
+        op: eq
+        value: []
+
+  # 4. 오류 상태 볼륨 탐지
+  #    status == "error" 인 볼륨 → 비정상 상태로 방치된 경우
+  - name: volume-in-error-state
+    resource: openstack.volume
+    description: |
+      상태가 error인 볼륨을 탐지한다.
+      오류 상태로 방치된 볼륨은 데이터 손실 위험이 있으며
+      정상적으로 삭제되지 않아 자원을 계속 점유할 수 있다.
+    filters:
+      - type: value
+        key: status
+        op: eq
+        value: error
+
+  # 5. 부팅 가능 볼륨 중 암호화 안 된 것 탐지
+  #    bootable == true 이면서 encrypted == false → OS 디스크가 암호화 안 됨
+  - name: volume-bootable-unencrypted
+    resource: openstack.volume
+    description: |
+      부팅 가능(bootable=true)하지만 암호화되지 않은 볼륨을 탐지한다.
+      OS가 설치된 루트 디스크가 암호화되지 않으면
+      스냅샷이나 이미지로 복사 시 전체 시스템 데이터가 노출된다.
+    filters:
+      - type: value
+        key: bootable
+        op: eq
+        value: "true"
+      - type: value
+        key: encrypted
+        op: eq
+        value: false

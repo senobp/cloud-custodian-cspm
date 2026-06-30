@@ -1,0 +1,59 @@
+# openstack-users-policies
+
+policies:
+
+  # MFA 미설정 사용자 탐지
+  - name: user-mfa-missing
+    resource: openstack.user
+    filters:
+      - or:
+        - type: extended-info
+          key: options.multi_factor_auth_enabled
+          value: absent
+        - type: extended-info
+          key: options.multi_factor_auth_enabled
+          value: false
+
+  # admin 권한인데 MFA 없는 사용자 탐지
+  - name: user-admin-mfa-missing
+    resource: openstack.user
+    filters:
+      - type: role
+        role_name: admin
+        system_scope: true
+      - or:
+        - type: extended-info
+          key: options.multi_factor_auth_enabled
+          value: absent
+        - type: extended-info
+          key: options.multi_factor_auth_enabled
+          value: false
+
+  # 비활성화된 계정 탐지
+  - name: user-disabled
+    resource: openstack.user
+    filters:
+      - type: value
+        key: enabled
+        op: eq
+        value: false
+
+  # 비활성화됐는데 admin 권한이 남아있는 사용자
+  - name: user-disabled-but-admin
+    resource: openstack.user
+    filters:
+      - type: value
+        key: enabled
+        op: eq
+        value: false
+      - type: role
+        role_name: admin
+        system_scope: true
+
+  # admin 권한 사용자 전체 탐지
+  - name: user-system-admin
+    resource: openstack.user
+    filters:
+      - type: role
+        role_name: admin
+        system_scope: true

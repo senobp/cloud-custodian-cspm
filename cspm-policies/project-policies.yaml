@@ -1,0 +1,27 @@
+policies:
+
+  # 1. 비활성화된 프로젝트 탐지
+  #    enabled == false 인 프로젝트 → 안 쓰는데 정리 안 된 경우
+  - name: detect-disabled-projects
+    description: |
+      비활성화(enabled=false) 상태인 프로젝트를 탐지한다.
+      비활성화된 프로젝트에 VM, 네트워크 등 리소스가 남아있으면
+      관리 사각지대가 되어 보안 위험이 발생할 수 있다.
+    resource: openstack.project
+    filters:
+      - type: value
+        key: enabled
+        value: false
+
+  # 2. 설명 없는 프로젝트 탐지
+  #    description 필드가 비어있는 프로젝트 → 누가 왜 만들었는지 알 수 없음
+  - name: detect-projects-without-description
+    description: |
+      description 필드가 비어있는 프로젝트를 탐지한다.
+      프로젝트 목적과 담당자가 기록되어 있지 않으면
+      담당자 부재 시 해당 프로젝트의 리소스를 파악하기 어렵다.
+    resource: openstack.project
+    filters:
+      - type: value
+        key: description
+        value: ""

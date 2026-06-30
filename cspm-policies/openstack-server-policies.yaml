@@ -1,0 +1,52 @@
+# openstack-server-policies
+
+# 방치 vm 체크
+policies:
+  - name: server-age-over-90d
+    resource: openstack.server
+    filters:
+      - type: age
+        op: gt
+        days: 90
+
+# SSH 전체 오픈 VM 탐지
+  - name: server-ssh-ingress-any
+    resource: openstack.server
+    filters:
+      - type: security-group
+        key: security_group_rules
+        attrs:
+          - type: value
+            key: direction
+            value: ingress
+          - type: value
+            key: port_range_min
+            value: 22
+          - type: value
+            key: remote_ip_prefix
+            value: '0.0.0.0/0'
+
+# owner 태그 없는 VM 탐지
+  - name: server-tag-missing
+    resource: openstack.server
+    filters:
+      - type: value
+        key: tags
+        op: eq
+        value: []
+
+# 고사양 VM 탐지
+  - name: server-flavor-xlarge
+    resource: openstack.server
+    filters:
+      - type: value
+        key: flavor.vcpus
+        op: ge
+        value: 8
+
+# 정책 5. image 없는 VM 탐지
+  - name: server-image-absent
+    resource: openstack.server
+    filters:
+      - type: image
+        status: absent

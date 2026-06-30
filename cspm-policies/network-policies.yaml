@@ -1,0 +1,17 @@
+# network-policies.yaml
+# c7n_openstack network.py 검증용 기본 정책
+# 실행: custodian run --cache-period 0 -s output network-policies.yaml
+# 표보기: custodian report -s output <단일정책.yaml> (resource 타입이 같은 정책끼리만 가능)
+
+policies:
+  - name: network-list-all
+    resource: openstack.network
+
+  - name: subnet-list-all
+    resource: openstack.subnet
+
+  - name: router-list-all
+    resource: openstack.router
+
+  - name: floating-ip-list-all
+    resource: openstack.floating-ip

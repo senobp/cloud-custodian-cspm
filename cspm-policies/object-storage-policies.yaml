@@ -1,0 +1,58 @@
+policies:
+
+  # 1. 퍼블릭 접근 컨테이너 탐지
+  #    read_ACL == ".r:*" 이면 인터넷 전체에 읽기 공개 상태
+  #    AWS S3 퍼블릭 버킷 차단과 동일한 개념 / CIS Benchmark 해당 항목
+  - name: storage-container-public-access
+    resource: openstack.storage-container
+    description: |
+      read_ACL이 ".r:*"로 설정된 컨테이너를 탐지한다.
+      누구나 인증 없이 컨테이너 내 오브젝트를 읽을 수 있어
+      민감 데이터 노출 위험이 있다.
+    filters:
+      - type: value
+        key: read_ACL
+        value: ".r:*"
+
+  # 2. 비어있는 컨테이너 탐지
+  #    object_count == 0인 컨테이너 → 불필요한 자원 정리 대상
+  - name: storage-container-empty
+    resource: openstack.storage-container
+    description: |
+      오브젝트가 하나도 없는 빈 컨테이너를 탐지한다.
+      사용하지 않는 컨테이너는 자원 낭비이며
+      접근 권한이 잘못 설정된 채 방치될 수 있다.
+    filters:
+      - type: value
+        key: object_count
+        op: eq
+        value: 0
+
+  # 3. 대용량 컨테이너 탐지
+  #    bytes_used > 10GB (10737418240 bytes) 초과 컨테이너 점검
+  #    과도한 스토리지 사용 현황 파악 및 비용 관리
+  - name: storage-container-large
+    resource: openstack.storage-container
+    description: |
+      사용 용량이 10GB를 초과한 컨테이너를 탐지한다.
+      대용량 컨테이너는 불필요한 데이터 적재나
+      비정상적인 데이터 증가의 징후일 수 있다.
+    filters:
+      - type: value
+        key: bytes_used
+        op: gt
+        value: 10737418240
+
+  # 4. write 권한도 전체 공개된 컨테이너 탐지
+  #    write_ACL == ".r:*" 이면 누구나 오브젝트 업로드/삭제 가능
+  - name: storage-container-public-write
+    resource: openstack.storage-container
+    description: |
+      write_ACL이 공개로 설정된 컨테이너를 탐지한다.
+      쓰기 권한이 열려있으면 악의적인 데이터 업로드 및
+      기존 데이터 삭제가 가능하여 매우 위험하다.
+    filters:
+      - type: value
+        key: write_ACL
+        op: ne
+        value: null

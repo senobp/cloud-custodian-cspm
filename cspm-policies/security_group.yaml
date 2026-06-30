@@ -1,0 +1,52 @@
+policies:
+  # 인터넷 전체에 SSH(22/tcp)를 허용한 보안그룹
+  - name: security-group-open-ssh
+    resource: openstack.security-group
+    description: Detect security groups that expose SSH to the entire IPv4 internet.
+    filters:
+      - type: value
+        key: "length(security_group_rules[?direction == 'ingress' && protocol == 'tcp' && port_range_min <= `22` && port_range_max >= `22` && remote_ip_prefix == '0.0.0.0/0'])"
+        op: gt
+        value: 0
+
+  # 인터넷 전체에 RDP(3389/tcp)를 허용한 보안그룹
+  - name: security-group-open-rdp
+    resource: openstack.security-group
+    description: Detect security groups that expose RDP to the entire IPv4 internet.
+    filters:
+      - type: value
+        key: "length(security_group_rules[?direction == 'ingress' && protocol == 'tcp' && port_range_min <= `3389` && port_range_max >= `3389` && remote_ip_prefix == '0.0.0.0/0'])"
+        op: gt
+        value: 0
+
+  # 인터넷 전체에 주요 DB 포트(3306, 5432, 6379)를 허용한 보안그룹
+  - name: security-group-open-database-port
+    resource: openstack.security-group
+    description: Detect security groups that expose MySQL, PostgreSQL, or Redis to the entire IPv4 internet.
+    filters:
+      - type: value
+        key: "length(security_group_rules[?direction == 'ingress' && protocol == 'tcp' && remote_ip_prefix == '0.0.0.0/0' && ((port_range_min <= `3306` && port_range_max >= `3306`) || (port_range_min <= `5432` && port_range_max >= `5432`) || (port_range_min <= `6379` && port_range_max >= `6379`))])"
+        op: gt
+        value: 0
+
+  # default 보안그룹이 인터넷 전체의 인바운드를 하나라도 허용한 경우
+  - name: default-security-group-overly-permissive
+    resource: openstack.security-group
+    description: Detect default security groups with unrestricted IPv4 ingress rules.
+    filters:
+      - type: value
+        key: name
+        value: default
+      - type: value
+        key: "length(security_group_rules[?direction == 'ingress' && remote_ip_prefix == '0.0.0.0/0'])"
+        op: gt
+        value: 0
+
+  # 규칙이 전혀 없는 보안그룹
+  - name: security-group-without-rules
+    resource: openstack.security-group
+    description: Detect security groups that contain no security group rules.
+    filters:
+      - type: value
+        key: "length(security_group_rules)"
+        value: 0
