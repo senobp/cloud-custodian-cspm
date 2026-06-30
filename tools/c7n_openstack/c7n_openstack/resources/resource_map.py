@@ -9,5 +9,9 @@ ResourceMap = {
     "openstack.security-group": "c7n_openstack.resources.security_group.SecurityGroup",
     "openstack.image": "c7n_openstack.resources.server.Image",
     "openstack.secret": "c7n_openstack.resources.secret.Secret",
-    "openstack.storage-container": "c7n_openstack.resources.object_storage.StorageContainer"
+    "openstack.storage-container": "c7n_openstack.resources.object_storage.StorageContainer",
+    "openstack.network":           "c7n_openstack.resources.network.Network",
+    "openstack.subnet":            "c7n_openstack.resources.network.Subnet",
+    "openstack.router":            "c7n_openstack.resources.network.Router",
+    "openstack.floating-ip":       "c7n_openstack.resources.network.FloatingIP",
 }
